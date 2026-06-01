@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>БХ Тренажер — Стоматологія 2 курс</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;600;700&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e1a;
+  --bg2: #111827;
+  --bg3: #1a2235;
+  --card: #151e2e;
+  --border: rgba(99,179,237,0.12);
+  --green: #10b981;
+  --green2: #059669;
+  --red: #ef4444;
+  --red2: #dc2626;
+  --blue: #3b82f6;
+  --cyan: #06b6d4;
+  --gold: #f59e0b;
+  --text: #e2e8f0;
+  --text2: #94a3b8;
+  --text3: #64748b;
+  --accent: #6366f1;
+  --accent2: #4f46e5;
+  --r: 12px;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Manrope', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── NOISE OVERLAY ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 0; opacity: 0.4;
+}
+
+/* ── GLOW ORBS ── */
+.orb {
+  position: fixed; border-radius: 50%;
+  filter: blur(80px); pointer-events: none; z-index: 0;
+}
+.orb1 { width: 400px; height: 400px; background: radial-gradient(circle, rgba(99,102,241,0.15), transparent); top: -100px; right: -100px; }
+.orb2 { width: 300px; height: 300px; background: radial-gradient(circle, rgba(6,182,212,0.1), transparent); bottom: 100px; left: -80px; }
+
+/* ── LOGIN SCREEN ── */
+#login-screen {
+  position: fixed; inset: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg);
+  animation: none;
+}
+#login-screen.hide {
+  animation: fadeOut 0.6s ease forwards;
+}
+@keyframes fadeOut { to { opacity: 0; pointer-events: none; } }
+
+.login-box {
+  position: relative; z-index: 1;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 48px 40px;
+  width: 100%; max-width: 440px;
+  box-shadow: 0 0 60px rgba(99,102,241,0.1);
+  animation: slideUp 0.7s cubic-bezier(.16,1,.3,1);
+}
+@keyframes slideUp { from { opacity:0; transform:translateY(40px); } to { opacity:1; transform:translateY(0); } }
+
+.login-icon { font-size: 48px; text-align: center; margin-bottom: 8px; }
+.login-title {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 22px; font-weight: 700;
+  text-align: center; margin-bottom: 8px;
+  background: linear-gradient(135deg, #fff 0%, var(--cyan) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.login-sub {
+  text-align: center; color: var(--text2); font-size: 13px;
+  margin-bottom: 32px; line-height: 1.6;
+}
+.login-label {
+  display: block; font-size: 11px; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--text3);
+  margin-bottom: 8px;
+}
+.login-input {
+  width: 100%; padding: 14px 18px;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--r); color: var(--text);
+  font-family: 'Manrope', sans-serif; font-size: 16px;
+  outline: none; transition: border-color 0.2s;
+  margin-bottom: 24px;
+}
+.login-input:focus { border-color: var(--accent); }
+.login-input::placeholder { color: var(--text3); }
+.login-btn {
+  width: 100%; padding: 16px;
+  background: linear-gradient(135deg, var(--accent), var(--cyan));
+  border: none; border-radius: var(--r);
+  color: #fff; font-family: 'Unbounded', sans-serif;
+  font-size: 14px; font-weight: 600;
+  letter-spacing: 1px; cursor: pointer;
+  transition: all 0.3s; position: relative; overflow: hidden;
+}
+.login-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(99,102,241,0.4); }
+.login-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3);
+  color: var(--green); border-radius: 20px; padding: 4px 12px;
+  font-size: 11px; margin-top: 16px;
+}
+
+/* ── MAIN APP ── */
+#app { display: none; position: relative; z-index: 1; }
+#app.show { display: block; animation: fadeIn 0.5s ease; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* ── HEADER ── */
+.header {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(10,14,26,0.9);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  display: flex; align-items: center; justify-content: space-between;
+  height: 64px;
+}
+.header-logo {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 14px; font-weight: 700;
+  background: linear-gradient(135deg, #fff, var(--cyan));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.header-logo span { color: var(--accent); -webkit-text-fill-color: var(--accent); }
+.header-user {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 24px; padding: 6px 14px;
+  font-size: 13px; color: var(--text2);
+}
+.user-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--cyan));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: #fff;
+}
+.header-stats { display: flex; gap: 16px; }
+.hstat {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--text3);
+}
+.hstat-val { font-weight: 600; font-size: 14px; }
+.hstat-val.green { color: var(--green); }
+.hstat-val.red { color: var(--red); }
+
+/* ── TABS ── */
+.tabs {
+  display: flex; gap: 4px;
+  padding: 16px 24px 0;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto; scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab-btn {
+  padding: 10px 20px;
+  background: none; border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text3); font-family: 'Manrope', sans-serif;
+  font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: all 0.2s;
+  white-space: nowrap; border-radius: 8px 8px 0 0;
+}
+.tab-btn:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+.tab-btn.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+
+/* ── MAIN CONTENT ── */
+.main { padding: 24px; max-width: 860px; margin: 0 auto; }
+
+/* ── DASHBOARD ── */
+.dash-greeting {
+  margin-bottom: 28px;
+}
+.dash-greeting h1 {
+  font-family: 'Unbounded', sans-serif;
+  font-size: clamp(20px,3vw,28px); font-weight: 700;
+  margin-bottom: 6px;
+}
+.dash-greeting p { color: var(--text2); font-size: 14px; }
+
+.stats-row {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px; margin-bottom: 28px;
+}
+.stat-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 20px 16px;
+  position: relative; overflow: hidden;
+}
+.stat-card::before {
+  content: attr(data-icon);
+  position: absolute; right: 12px; top: 12px;
+  font-size: 24px; opacity: 0.4;
+}
+.stat-card-val {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 28px; font-weight: 700;
+  margin-bottom: 4px;
+}
+.stat-card-lbl { font-size: 11px; color: var(--text3); letter-spacing: 1px; text-transform: uppercase; }
+.stat-card.blue .stat-card-val { color: var(--blue); }
+.stat-card.green .stat-card-val { color: var(--green); }
+.stat-card.red .stat-card-val { color: var(--red); }
+.stat-card.gold .stat-card-val { color: var(--gold); }
+
+.section-title {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 13px; font-weight: 600;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: var(--text3); margin-bottom: 16px;
+  display: flex; align-items: center; gap: 10px;
+}
+.section-title::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+
+.topic-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+}
+.topic-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 20px;
+  cursor: pointer; transition: all 0.25s;
+  position: relative; overflow: hidden;
+}
+.topic-card::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, var(--accent), var(--cyan));
+  opacity: 0; transition: opacity 0.3s;
+}
+.topic-card:hover { border-color: rgba(99,102,241,0.4); transform: translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.3); }
+.topic-card:hover::before { opacity: 0.05; }
+.topic-card-content { position: relative; z-index: 1; }
+.topic-icon { font-size: 28px; margin-bottom: 10px; display: block; }
+.topic-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+.topic-count { font-size: 12px; color: var(--text3); }
+.topic-progress {
+  height: 3px; background: var(--bg3);
+  border-radius: 2px; margin-top: 12px; overflow: hidden;
+}
+.topic-progress-bar {
+  height: 100%; background: linear-gradient(90deg, var(--accent), var(--cyan));
+  border-radius: 2px; transition: width 0.5s ease;
+}
+
+/* ── QUIZ VIEW ── */
+.quiz-header {
+  display: flex; align-items: center; gap: 16px;
+  margin-bottom: 24px;
+}
+.back-btn {
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--text2); padding: 8px 16px; border-radius: 8px;
+  cursor: pointer; font-size: 13px; transition: all 0.2s;
+  font-family: 'Manrope', sans-serif;
+}
+.back-btn:hover { border-color: var(--accent); color: var(--text); }
+.quiz-info { flex: 1; }
+.quiz-info h2 {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 16px; font-weight: 600;
+}
+.quiz-info p { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+.progress-bar-wrap {
+  background: var(--bg3); border-radius: 4px; height: 6px;
+  margin-bottom: 28px; overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%; background: linear-gradient(90deg, var(--accent), var(--cyan));
+  border-radius: 4px; transition: width 0.5s ease;
+}
+
+.question-num {
+  font-size: 11px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--text3); margin-bottom: 12px;
+}
+.question-text {
+  font-size: clamp(15px,2vw,18px); font-weight: 500;
+  line-height: 1.7; margin-bottom: 28px;
+  padding: 20px; background: var(--card);
+  border: 1px solid var(--border); border-radius: var(--r);
+  border-left: 3px solid var(--accent);
+}
+
+.options-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+.option-btn {
+  padding: 16px 20px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r); color: var(--text);
+  font-family: 'Manrope', sans-serif; font-size: 14px;
+  text-align: left; cursor: pointer;
+  transition: all 0.2s; display: flex; align-items: flex-start; gap: 12px;
+  line-height: 1.5;
+}
+.option-btn:hover:not(:disabled) {
+  border-color: rgba(99,102,241,0.5); background: rgba(99,102,241,0.05);
+  transform: translateX(4px);
+}
+.option-btn:disabled { cursor: default; }
+.option-btn.correct {
+  background: rgba(16,185,129,0.1); border-color: var(--green);
+  color: #fff;
+}
+.option-btn.wrong {
+  background: rgba(239,68,68,0.1); border-color: var(--red);
+  color: #fff;
+}
+.option-btn.reveal {
+  background: rgba(99,102,241,0.08); border-color: rgba(99,102,241,0.4);
+}
+.option-letter {
+  width: 24px; height: 24px; flex-shrink: 0;
+  border-radius: 6px; background: var(--bg3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: var(--text3);
+  border: 1px solid var(--border);
+}
+.option-btn.correct .option-letter { background: var(--green); color: #fff; border-color: var(--green); }
+.option-btn.wrong .option-letter { background: var(--red); color: #fff; border-color: var(--red); }
+.option-btn.reveal .option-letter { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* ── FEEDBACK CARD ── */
+.feedback-card {
+  border-radius: var(--r); padding: 20px 24px;
+  margin-bottom: 20px; animation: slideDown 0.4s ease;
+  display: none;
+}
+.feedback-card.show { display: block; }
+@keyframes slideDown { from { opacity:0; transform:translateY(-10px); } to { opacity:1; transform:translateY(0); } }
+.feedback-card.correct-fb {
+  background: rgba(16,185,129,0.08);
+  border: 1px solid rgba(16,185,129,0.3);
+}
+.feedback-card.wrong-fb {
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.3);
+}
+.fb-title {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 14px; font-weight: 600; margin-bottom: 10px;
+  display: flex; align-items: center; gap: 8px;
+}
+.fb-title.correct-fb { color: var(--green); }
+.fb-title.wrong-fb { color: var(--red); }
+.fb-body { font-size: 14px; line-height: 1.7; color: var(--text2); }
+.fb-explanation {
+  margin-top: 14px; padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  font-size: 13px; color: var(--text2); line-height: 1.7;
+}
+.fb-explanation strong { color: var(--cyan); }
+
+/* ── AI CHAT ── */
+.ai-section {
+  margin-top: 20px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r); overflow: hidden;
+}
+.ai-header {
+  padding: 14px 20px;
+  background: rgba(99,102,241,0.08);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+  font-size: 13px; font-weight: 600; color: var(--accent);
+}
+.ai-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--green); animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:0.5;transform:scale(0.8);} }
+.ai-messages {
+  padding: 16px; max-height: 320px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 12px;
+  scrollbar-width: thin; scrollbar-color: var(--bg3) transparent;
+}
+.ai-msg {
+  max-width: 85%; padding: 12px 16px;
+  border-radius: 14px; font-size: 13px; line-height: 1.6;
+  animation: msgIn 0.3s ease;
+}
+@keyframes msgIn { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:translateY(0);} }
+.ai-msg.bot {
+  background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.2);
+  color: var(--text); align-self: flex-start;
+}
+.ai-msg.user {
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--text); align-self: flex-end;
+}
+.ai-msg .msg-label {
+  font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--text3); margin-bottom: 4px;
+}
+.ai-input-row {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  display: flex; gap: 10px;
+}
+.ai-input {
+  flex: 1; background: var(--bg2);
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 14px; color: var(--text);
+  font-family: 'Manrope', sans-serif; font-size: 13px;
+  outline: none; transition: border-color 0.2s;
+}
+.ai-input:focus { border-color: var(--accent); }
+.ai-input::placeholder { color: var(--text3); }
+.ai-send-btn {
+  background: var(--accent); border: none; border-radius: 8px;
+  padding: 10px 16px; color: #fff; cursor: pointer;
+  font-size: 16px; transition: all 0.2s;
+}
+.ai-send-btn:hover { background: var(--accent2); transform: scale(1.05); }
+.ai-send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.ai-typing {
+  display: flex; gap: 4px; padding: 8px 4px;
+}
+.ai-typing span {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent); opacity: 0.5;
+  animation: blink 1.2s infinite;
+}
+.ai-typing span:nth-child(2) { animation-delay: 0.2s; }
+.ai-typing span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink { 0%,100%{opacity:0.2;} 50%{opacity:1;} }
+
+/* ── NEXT BUTTON ── */
+.next-btn {
+  padding: 14px 32px;
+  background: linear-gradient(135deg, var(--accent), var(--cyan));
+  border: none; border-radius: var(--r);
+  color: #fff; font-family: 'Unbounded', sans-serif;
+  font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all 0.3s;
+  display: none;
+}
+.next-btn.show { display: inline-block; }
+.next-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(99,102,241,0.4); }
+
+/* ── RESULTS ── */
+.results-box {
+  text-align: center; padding: 40px 20px;
+  animation: slideUp 0.5s ease;
+}
+.results-emoji { font-size: 64px; margin-bottom: 16px; }
+.results-title {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 24px; font-weight: 700;
+  margin-bottom: 8px;
+}
+.results-score {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 48px; font-weight: 700;
+  margin: 16px 0;
+}
+.results-sub { font-size: 14px; color: var(--text2); margin-bottom: 32px; }
+.results-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.res-btn {
+  padding: 12px 28px; border-radius: var(--r);
+  font-family: 'Manrope', sans-serif; font-size: 14px;
+  font-weight: 600; cursor: pointer; transition: all 0.2s;
+}
+.res-btn.primary {
+  background: linear-gradient(135deg, var(--accent), var(--cyan));
+  border: none; color: #fff;
+}
+.res-btn.secondary {
+  background: none; border: 1px solid var(--border); color: var(--text2);
+}
+.res-btn:hover { transform: translateY(-2px); }
+
+/* ── STUDY MODE ── */
+.study-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 28px;
+  margin-bottom: 16px;
+}
+.study-q {
+  font-size: 15px; font-weight: 600; line-height: 1.6;
+  margin-bottom: 16px; color: var(--text);
+  padding-bottom: 16px; border-bottom: 1px solid var(--border);
+}
+.study-a {
+  font-size: 14px; line-height: 1.8; color: var(--text2);
+  display: none;
+}
+.study-a.show { display: block; }
+.study-a-btn {
+  background: var(--bg3); border: 1px solid var(--border);
+  color: var(--text2); padding: 8px 16px; border-radius: 8px;
+  cursor: pointer; font-size: 13px; transition: all 0.2s;
+  font-family: 'Manrope', sans-serif; margin-top: 12px;
+}
+.study-a-btn:hover { border-color: var(--accent); color: var(--text); }
+
+/* ── ALL QUESTIONS LIST ── */
+.q-list { display: flex; flex-direction: column; gap: 10px; }
+.q-item {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 16px 20px;
+  cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; gap: 14px;
+}
+.q-item:hover { border-color: rgba(99,102,241,0.4); transform: translateX(4px); }
+.q-num-badge {
+  width: 32px; height: 32px; flex-shrink: 0;
+  border-radius: 8px; background: var(--bg3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: var(--text3);
+  border: 1px solid var(--border);
+}
+.q-num-badge.done { background: rgba(16,185,129,0.1); color: var(--green); border-color: rgba(16,185,129,0.3); }
+.q-text-preview { font-size: 14px; color: var(--text2); line-height: 1.4; }
+
+/* ── CATEGORY CHIPS ── */
+.chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+.chip {
+  padding: 6px 14px; border-radius: 20px;
+  font-size: 12px; background: var(--bg3);
+  border: 1px solid var(--border); color: var(--text2);
+  cursor: pointer; transition: all 0.2s;
+}
+.chip.active { background: rgba(99,102,241,0.2); border-color: var(--accent); color: var(--text); }
+.chip:hover { border-color: var(--accent); }
+
+/* ── RESPONSIVE ── */
+@media(max-width:600px) {
+  .main { padding: 16px; }
+  .header { padding: 0 16px; }
+  .header-stats { display: none; }
+  .tabs { padding: 12px 16px 0; }
+  .login-box { margin: 16px; padding: 32px 24px; }
+}
+</style>
+</head>
+<body>
+
+<div class="orb orb1"></div>
+<div class="orb orb2"></div>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-icon">🦷</div>
+    <div class="login-title">БХ Тренажер</div>
+    <div class="login-sub">Підготовка до іспиту з біохімії<br>Стоматологічний факультет · 2 курс</div>
+    <label class="login-label" for="name-input">Ваше ім'я</label>
+    <input id="name-input" class="login-input" type="text" placeholder="Введіть ваше ім'я..." autocomplete="off">
+    <button class="login-btn" onclick="startApp()">Розпочати навчання →</button>
+    <div style="text-align:center">
+      <div class="login-badge">✦ 59 задач · ШІ-підтримка · Детальні пояснення</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <header class="header">
+    <div class="header-logo">БХ<span>•</span>Стомат</div>
+    <div class="header-stats">
+      <div class="hstat">✓ <span class="hstat-val green" id="h-correct">0</span></div>
+      <div class="hstat">✗ <span class="hstat-val red" id="h-wrong">0</span></div>
+      <div class="hstat">📊 <span class="hstat-val" id="h-pct" style="color:var(--text2)">—%</span></div>
+    </div>
+    <div class="header-user">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <span id="user-name-header">Студент</span>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('dashboard')">🏠 Головна</button>
+    <button class="tab-btn" onclick="showTab('quiz')">🎯 Квіз</button>
+    <button class="tab-btn" onclick="showTab('study')">📖 Вивчення</button>
+    <button class="tab-btn" onclick="showTab('chat')">🤖 ШІ-Асистент</button>
+  </div>
+
+  <!-- DASHBOARD TAB -->
+  <div id="tab-dashboard" class="main">
+    <div class="dash-greeting">
+      <h1 id="greeting-text">Привіт! 👋</h1>
+      <p>Обери режим підготовки або почни квіз прямо зараз</p>
+    </div>
+    <div class="stats-row">
+      <div class="stat-card blue" data-icon="📝">
+        <div class="stat-card-val" id="stat-total">59</div>
+        <div class="stat-card-lbl">Всього задач</div>
+      </div>
+      <div class="stat-card green" data-icon="✅">
+        <div class="stat-card-val" id="stat-correct">0</div>
+        <div class="stat-card-lbl">Правильно</div>
+      </div>
+      <div class="stat-card red" data-icon="❌">
+        <div class="stat-card-val" id="stat-wrong">0</div>
+        <div class="stat-card-lbl">Помилок</div>
+      </div>
+      <div class="stat-card gold" data-icon="🏆">
+        <div class="stat-card-val" id="stat-pct">—%</div>
+        <div class="stat-card-lbl">Точність</div>
+      </div>
+    </div>
+    <div class="section-title">Теми для підготовки</div>
+    <div class="topic-grid" id="topic-grid"></div>
+  </div>
+
+  <!-- QUIZ TAB -->
+  <div id="tab-quiz" class="main" style="display:none">
+    <div id="quiz-start-screen">
+      <div class="dash-greeting">
+        <h1>Квіз-режим 🎯</h1>
+        <p>Вибери тему або пройди всі питання підряд</p>
+      </div>
+      <div class="chips" id="quiz-chips"></div>
+      <button class="login-btn" style="max-width:300px" onclick="startQuiz()">Почати квіз →</button>
+    </div>
+    <div id="quiz-game-screen" style="display:none">
+      <div class="quiz-header">
+        <button class="back-btn" onclick="endQuiz()">← Назад</button>
+        <div class="quiz-info">
+          <h2 id="quiz-topic-name">Всі питання</h2>
+          <p id="quiz-progress-text">Питання 1 з 10</p>
+        </div>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="quiz-progress-bar" style="width:10%"></div>
+      </div>
+      <div id="quiz-content"></div>
+    </div>
+    <div id="quiz-results-screen" style="display:none"></div>
+  </div>
+
+  <!-- STUDY TAB -->
+  <div id="tab-study" class="main" style="display:none">
+    <div class="dash-greeting">
+      <h1>Режим вивчення 📖</h1>
+      <p>Читай питання та відповіді, підготуйся до іспиту</p>
+    </div>
+    <div class="chips" id="study-chips"></div>
+    <div class="q-list" id="study-list"></div>
+  </div>
+
+  <!-- CHAT TAB -->
+  <div id="tab-chat" class="main" style="display:none">
+    <div class="dash-greeting">
+      <h1>ШІ-Асистент 🤖</h1>
+      <p>Задавай будь-які питання з біохімії — поясню зрозуміло</p>
+    </div>
+    <div class="ai-section" style="height:500px;display:flex;flex-direction:column">
+      <div class="ai-header">
+        <div class="ai-dot"></div>
+        БіохімАІ · Асистент стоматолога
+      </div>
+      <div class="ai-messages" id="main-chat-messages">
+        <div class="ai-msg bot">
+          <div class="msg-label">Асистент</div>
+          Привіт! Я твій ШІ-асистент з біохімії. Можу пояснити будь-яку тему з програми 2-го курсу стоматологічного факультету. Питай! 🦷
+        </div>
+      </div>
+      <div class="ai-input-row">
+        <input class="ai-input" id="main-chat-input" placeholder="Запитай про мінералізацію, вітаміни, карієс..." onkeydown="if(event.key==='Enter')sendMainChat()">
+        <button class="ai-send-btn" onclick="sendMainChat()" id="main-chat-btn">➤</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════
+const QUESTIONS = [
+  // TOPIC 1: Мінералізація зубів та апатити
+  {
+    id:1, topic:"Мінералізація та апатити",
+    q:"Який апатит утворюється при фізіологічно оптимальному надходженні фтору (2,5–3,5 мг/добу)?",
+    options:["Гідроксиапатит Ca₁₀(PO₄)₆(OH)₂","Фторапатит Ca₁₀(PO₄)₆F₂","Стронцієвий апатит SrCa₉(PO₄)₆(OH)₂","Карбонатапатит"],
+    correct:1,
+    explanation:"Фторапатит Ca₁₀(PO₄)₆F₂ — найміцніший серед усіх апатитів. Він підвищує стійкість емалі та знижує її проникність. Фтор заміщує OH-групу, роблячи кристалічну решітку щільнішою та стійкішою до кислот.",
+    wrong_hint:"Гідроксиапатит — це основний апатит зуба, але без фтору він менш стійкий до кислот."
+  },
+  {
+    id:2, topic:"Мінералізація та апатити",
+    q:"Яке оптимальне співвідношення Са/Р необхідне для нормальної мінералізації зуба?",
+    options:["1.0","1.3","1.67","2.0"],
+    correct:2,
+    explanation:"Оптимальне співвідношення Са/Р = 1,67 — саме при такому відношенні найкраще формуються кристали гідроксиапатиту. Це значення характерне для тканин зуба. При зниженні нижче 1,3 — настає патологічна демінералізація.",
+    wrong_hint:"1,3 — це критичне значення, нижче якого починається руйнування структури гідроксиапатиту, але не оптимальне для мінералізації."
+  },
+  {
+    id:3, topic:"Мінералізація та апатити",
+    q:"Чому стронцій знижує резистентність зуба до карієсу?",
+    options:["Стронцій підвищує кислотність слини","Заміна Ca на Sr змінює архітектоніку апатиту, роблячи його менш стійким","Стронцій блокує синтез амілази","Стронцій підвищує проникність дентину"],
+    correct:1,
+    explanation:"Стронцієвий апатит SrCa₉(PO₄)₆(OH)₂ має порушену кристалічну структуру, бо Sr²⁺ більший за Ca²⁺. Це призводить до збільшення ломкості зуба та легшого руйнування під дією органічних кислот.",
+    wrong_hint:"Справа не в кислотності слини, а в порушенні мікроструктури апатиту при заміні кальцію на стронцій."
+  },
+  {
+    id:4, topic:"Мінералізація та апатити",
+    q:"При якому співвідношенні Са/Р в емалі відбувається патологічна демінералізація?",
+    options:["Нижче 2.0","Нижче 1.67","Нижче 1.3","Нижче 0.8"],
+    correct:2,
+    explanation:"При зниженні Са/Р нижче 1,3 — демінералізація переходить з фізіологічного в патологічний процес: відбувається руйнування гідроксиапатиту та вимивання кальцію з тканин зуба.",
+    wrong_hint:"1,67 — це оптимальне значення для мінералізації, а не критична межа демінералізації."
+  },
+  // TOPIC 2: Вітаміни та зуби
+  {
+    id:5, topic:"Вітаміни та зуби",
+    q:"Яка біологічно активна форма вітаміну D₃?",
+    options:["Ергокальциферол","Холекальциферол","Кальцитріол (1,25-дигідроксихолекальциферол)","25-гідроксихолекальциферол"],
+    correct:2,
+    explanation:"Кальцитріол (1,25-дигідроксихолекальциферол) — активна форма вітаміну D₃. Він посилює всмоктування Ca²⁺ в кишківнику, індукуючи синтез Ca²⁺-зв'язуючого і транспортуючого білка в ентероцитах. Діє за гормоноподібним механізмом.",
+    wrong_hint:"Холекальциферол — це неактивна форма D₃, яка утворюється в шкірі. Вона ще потребує двоступеневого гідроксилювання (в печінці та нирках) для активації."
+  },
+  {
+    id:6, topic:"Вітаміни та зуби",
+    q:"При недостатності якого вітаміну гальмується синтез колагену та порушується мінералізація тканин зуба?",
+    options:["Вітамін А","Вітамін С (аскорбінова кислота)","Вітамін D","Вітамін K"],
+    correct:1,
+    explanation:"Вітамін С — кофактор гідроксилаз (монооксигеназ), що каталізують гідроксилювання проліну → гідроксипролін і лізину → гідроксилізин. Без цього неможливе формування функціонально активного колагену — органічного матриксу тканин зуба.",
+    wrong_hint:"Вітамін D регулює мінерализацію, але не синтез колагену. Без колагену немає матриксу для відкладення кристалів апатитів."
+  },
+  {
+    id:7, topic:"Вітаміни та зуби",
+    q:"Кровоточивість ясен свідчить про недостатність яких вітамінів?",
+    options:["Вітаміни А і D","Вітаміни В₁ і В₂","Вітаміни Р і С","Вітаміни К і Е"],
+    correct:2,
+    explanation:"Вітамін Р (флавоноїди) зміцнює судинну стінку та зменшує її проникність. Вітамін С необхідний для синтезу колагену судин. Їх спільна недостатність → підвищена ломкість та проникність капілярів → кровоточивість ясен.",
+    wrong_hint:"Вітамін К відповідає за згортання крові, але кровоточивість ясен — це капілярна ламкість, пов'язана з Р і С."
+  },
+  {
+    id:8, topic:"Вітаміни та зуби",
+    q:"Чому препарати вітаміну D₃ в комплексі з лимонною кислотою ефективніші при лікуванні карієсу?",
+    options:["Лимонна кислота знижує pH слини","Цитрат утворює хелатні комплекси з Ca²⁺, збільшуючи його концентрацію в крові","Лимонна кислота активує вітамін D","Цитрат блокує карієсогенні бактерії"],
+    correct:1,
+    explanation:"Вітамін D₃ посилює всмоктування Ca²⁺ в кишківнику. Лимонна кислота (цитрат-аніон) зв'язує Ca²⁺, утворюючи розчинні хелатні комплекси → додатково збільшує концентрацію кальцію в крові. Разом вони максимально підвищують Ca²⁺ у тканинах зуба.",
+    wrong_hint:"Цитрат не знижує pH, навпаки — він є транспортною формою кальцію, що сприяє його доставці до тканин зуба."
+  },
+  {
+    id:9, topic:"Вітаміни та зуби",
+    q:"Яка роль вітаміну К у формуванні тканин зуба?",
+    options:["Регулює синтез колагену","Є кофактором глутамілкарбоксилази, необхідної для синтезу γ-карбоксиглутамінової кислоти в кальпротеїні","Посилює всмоктування кальцію","Активує лізоцим"],
+    correct:1,
+    explanation:"Вітамін К — кофактор ферменту глутамілкарбоксилази, яка перетворює глутамінову кислоту в γ-карбоксиглутамінову. Ця амінокислота в кальпротеїні (остеокальцині) утворює центри зв'язування Ca²⁺ → запускає нуклеацію апатитів.",
+    wrong_hint:"Вітамін С регулює синтез колагену, а D — всмоктування кальцію. Вітамін К специфічно впливає на кальпротеїн."
+  },
+  {
+    id:10, topic:"Вітаміни та зуби",
+    q:"Чому пацієнту з гіпоплазією зуба призначення вітамінів A, D, E не дало ефекту?",
+    options:["Вітаміни вже неефективні при гіпоплазії","Порушене всмоктування жиророзчинних вітамінів (патологія печінки або жовчних шляхів)","Організм виробив толерантність до вітамінів","Необхідно додати вітамін С"],
+    correct:1,
+    explanation:"Вітаміни A, D, E — жиророзчинні. Їх всмоктування залежить від жовчних кислот (глікохолевої, таурохолевої) та нормального відтоку жовчі. При гепатитах, жовчокам'яній хворобі або пухлинах жовчних шляхів — всмоктування порушується.",
+    wrong_hint:"Проблема не в самих вітамінах, а в їх всмоктуванні. Жиророзчинні вітаміни потребують жовчних кислот для емульгування жирів."
+  },
+  // TOPIC 3: Слина та її функції
+  {
+    id:11, topic:"Слина та її функції",
+    q:"Який фермент є основним антибактеріальним компонентом слини?",
+    options:["α-амілаза","Лактопероксидаза","Лізоцим (мурамідаза)","Гіалуронідаза"],
+    correct:2,
+    explanation:"Лізоцим (мурамідаза) — фермент, вміст якого в слині 0,15–0,25 г/л (5% білків слини). Він розщеплює муреїн — компонент клітинної стінки бактерій. При зниженні лізоциму → розвиток патогенної мікрофлори → органічні кислоти → карієс.",
+    wrong_hint:"α-амілаза розщеплює крохмаль, але не має антибактеріальної дії. Лізоцим — головний захисник ротової порожнини."
+  },
+  {
+    id:12, topic:"Слина та її функції",
+    q:"Яка залоза є основним джерелом α-амілази в слині (до 70%)?",
+    options:["Підщелепна","Підязикова","Привушна","Малі слинні залози"],
+    correct:2,
+    explanation:"Привушні залози продукують до 70% α-амілази (вміст 0,2–0,5 г/л, 10% білків слини). Амілаза каталізує гідроліз крохмалю та глікогену до мальтози. При гіпофункції привушних залоз — порушується перетравлення вуглеводів.",
+    wrong_hint:"Підщелепна залоза — основне джерело лізоциму та муцину (71% об'єму слини), але не амілази."
+  },
+  {
+    id:13, topic:"Слина та її функції",
+    q:"Який відсоток добової продукції слини виробляють підщелепні залози?",
+    options:["30%","50%","71%","90%"],
+    correct:2,
+    explanation:"Підщелепні (підщелепні) залози виробляють 71% добової продукції слини. Вони є основним джерелом лізоциму (0,15–0,25 г/л) та муцину (2–3 г/л, 50–60% білків слини). Гіпофункція → зниження захисних властивостей слини.",
+    wrong_hint:"Привушні залози — головне джерело амілази, але обсяг їхнього секрету менший порівняно з підщелепними."
+  },
+  {
+    id:14, topic:"Слина та її функції",
+    q:"Вміст яких аніонів значно збільшується в слині курців?",
+    options:["Хлоридів","Фосфатів","Тіоціанатів (роданідів)","Карбонатів"],
+    correct:2,
+    explanation:"У курців зростає вміст тіоціанатів (роданідів) SCN⁻ — форми виведення ціанідів (CN⁻) з організму. Синильна кислота у великій кількості міститься в тютюні та потрапляє в організм з димом при вдиханні.",
+    wrong_hint:"Хлориди та фосфати — звичайні компоненти слини. Тіоціанати специфічні для курців — продукт знешкодження ціанідів."
+  },
+  {
+    id:15, topic:"Слина та її функції",
+    q:"При яких умовах слина з мінералізуючого фактора перетворюється на демінералізуючий?",
+    options:["При підвищенні pH вище 7,5","При зниженні pH нижче 6,0","При підвищенні температури","При зменшенні об'єму слини"],
+    correct:1,
+    explanation:"При зниженні pH нижче 6,0 слина з перенасиченої кальцієм та фосфатами (гідроксиапатитом) стає ненасиченою. Тобто розчинність апатитів зростає і вони починають розчинятися — мінералізуючий фактор стає демінералізуючим.",
+    wrong_hint:"При нейтральному pH слина захищає зуби. Критичний поріг — pH 6,0, нижче якого починається розчинення апатитів."
+  },
+  {
+    id:16, topic:"Слина та її функції",
+    q:"Чому при емоційних навантаженнях 'пересихає в роті'?",
+    options:["Зростає рН слини","Підвищення тонусу симпатичного відділу НС зменшує секрецію слини","Зменшується вміст муцину","Зростає активність ферментів слини"],
+    correct:1,
+    explanation:"Регуляція слинних залоз — нейрогуморальна. Підвищення тонусу симпатичного відділу НС (при стресі) → зменшення секреції слини → відчуття сухості. Подолати: випити ковток води, що рефлекторно стимулює слиноутворення.",
+    wrong_hint:"Це нейрогуморальна відповідь, а не зміна складу слини. Симпатика пригнічує слиноутворення."
+  },
+  {
+    id:17, topic:"Слина та її функції",
+    q:"Які наслідки гіпосалівації для органів ротової порожнини?",
+    options:["Посилення мінералізації зубів","Демінералізація тканин зуба, карієс, гінгівіт, пародонтит","Покращення антибактеріального захисту","Нейтралізація кислот"],
+    correct:1,
+    explanation:"При гіпосалівації: порушується мінералізуюча функція → демінералізація; знижується захисна функція → розвиток патогенної мікрофлори; зменшується дія паротину та калікреїну → карієс, гінгівіт, пародонтит, остеоліз альвеол.",
+    wrong_hint:"Менше слини = менший захист. Слина — це мінералізуючий агент, буфер і антисептик."
+  },
+  {
+    id:18, topic:"Слина та її функції",
+    q:"Що відбувається в шлунку при гіперсалівації?",
+    options:["Посилення перетравлення білків","Нейтралізація соляної кислоти слаболужною слиною → пригнічення травлення білків","Прискорення моторики шлунку","Підвищення виділення пепсину"],
+    correct:1,
+    explanation:"Слина має слаболужну реакцію. При надмірному надходженні в шлунок → нейтралізація HCl → пригнічення активності пепсину → порушення перетравлення білків → посилення гниття білків у кишківнику → токсини в кров.",
+    wrong_hint:"Слаболужна слина нейтралізує кислотне середовище шлунку, яке необхідне для роботи протеаз."
+  },
+  // TOPIC 4: Карієс та демінералізація
+  {
+    id:19, topic:"Карієс та патологія",
+    q:"Чому у працівників кондитерських підприємств підвищений ризик карієсу?",
+    options:["Через стрес та психологічне навантаження","Пил вуглеводів зброджується мікроорганізмами → органічні кислоти → зниження pH → демінералізація","Через вживання великої кількості цукру","Через нестачу фтору в харчуванні"],
+    correct:1,
+    explanation:"Пил вуглеводів (сахароза, глюкоза, фруктоза) осідає на слизових і зубах → інтенсивне бродіння мікроорганізмами → молочна, пропіонова, масляна, мурашина кислоти → зниження pH → потужна демінералізація.",
+    wrong_hint:"Справа не у вживанні, а в тому, що пил вуглеводів постійно осідає на зубах і ферментується мікробами."
+  },
+  {
+    id:20, topic:"Карієс та патологія",
+    q:"Які метаболіти карієсу можуть ініціювати пульпіт?",
+    options:["Глюкоза та амінокислоти","Молочна, пропіонова, масляна кислоти → зниження pH → деструкція пульпи","Кальцій та фосфати","Ліпіди мікроорганізмів"],
+    correct:1,
+    explanation:"Мікроорганізми по дентинних канальцях проникають у пульпу → органічні кислоти → локальне зниження pH → деструкція тканин пульпи + запальна ексудація → набряк → стискання судин і нервів → невріт і больовий синдром.",
+    wrong_hint:"Основний пусковий механізм — органічні кислоти та pH. Самі мікроорганізми і їх токсини є вторинними факторами."
+  },
+  {
+    id:21, topic:"Карієс та патологія",
+    q:"Що таке зубна бляшка і чому вона небезпечна?",
+    options:["Скупчення зубного каменю","Матрикс з глікопротеїнів + полісахариди бактерій → карієсогенні стрептококи виробляють кислоти та ферменти → демінералізація емалі","Мінеральні відкладення на зубах","Шар муцину на поверхні зуба"],
+    correct:1,
+    explanation:"Зубна бляшка: адсорбція глікопротеїнів → утворення пелікули → мікроорганізми продукують декстрани → матрикс бляшки. Карієсогенні стрептококи → протеїнази, гіалуронідаза, органічні кислоти → хімічне руйнування емалі.",
+    wrong_hint:"Зубний камінь — це вже мінералізована бляшка. Найнебезпечніша саме рідка, нещойно утворена бляшка з активними бактеріями."
+  },
+  {
+    id:22, topic:"Карієс та патологія",
+    q:"Для попередження карієсу стоматологи радять замінити вуглеводи на ксиліт та аспартам. Чому?",
+    options:["Вони більш поживні","Мікрофлора рота їх не ферментує → не утворюються органічні кислоти → pH не знижується","Вони містять фтор","Вони укріплюють емаль"],
+    correct:1,
+    explanation:"Вуглеводи (сахароза) ферментуються мікрофлорою → органічні кислоти → зниження pH → демінералізація. Невуглеводні підсолоджувачі (ксиліт, аспартам, сахарин) не ферментуються, тому pH не знижується і карієс не розвивається.",
+    wrong_hint:"Ксиліт навіть має антикарієсну дію — він пригнічує ріст S. mutans, але головне — відсутність бродіння."
+  },
+  {
+    id:23, topic:"Карієс та патологія",
+    q:"Яка патологія розвивається при ксеростомії?",
+    options:["Гіпертрофія ясен","Множинний карієс, гінгівіт, пародонтит через відсутність захисних функцій слини","Флюороз","Гіперплазія емалі"],
+    correct:1,
+    explanation:"Ксеростомія (недостатнє слиноутворення) → відсутність лізоциму → патогенна мікрофлора → зниження pH → демінералізація. Крім того, відсутня лужна фосфатаза слини, яка сприяє мінералізації. Результат: множинний карієс та запалення тканин пародонту.",
+    wrong_hint:"Ксеростомія — це суха ротова порожнина. Без слини втрачається весь спектр захисту: антибактеріальний, мінералізуючий, буферний."
+  },
+  // TOPIC 5: Фтор та флюороз
+  {
+    id:24, topic:"Фтор та флюороз",
+    q:"Як фторид натрію впливає на проникність емалі?",
+    options:["Збільшує проникність","Не впливає","Зменшує проникність, тому застосовується на завершальному етапі ремінералізуючої терапії","Змінює склад апатитів без впливу на проникність"],
+    correct:2,
+    explanation:"Після обробки NaF → фторапатит → зниження проникності емалі. Тому обробку проводять ПІСЛЯ аплікацій глюконату/гліцерофосфату кальцію, а не до — щоб спочатку насититити тканини кальцієм, а потім 'запечатати' емаль.",
+    wrong_hint:"Фтор зменшує проникність — це його ключова властивість. Саме тому він ефективний у профілактиці карієсу."
+  },
+  {
+    id:25, topic:"Фтор та флюороз",
+    q:"Механізм розвитку флюорозу та метод лікування?",
+    options:["Надлишок фтору посилює мінералізацію","Надлишок F⁻ → CaF₂ (розчинний, вимивається) → розпад гідроксиапатиту → демінералізація; лікування — глюконат кальцію","Флюороз — це нестача фтору","Надлишок фтору блокує лізоцим"],
+    correct:1,
+    explanation:"Ca₁₀(PO₄)₆(OH)₂ + 20F⁻ → 10CaF₂ + 6PO₄³⁻ + 2OH⁻. CaF₂ — розчинний, легко вимивається → демінералізація. Лікування: аплікації/електрофорез з глюконатом або гліцерофосфатом кальцію → відновлення гідроксиапатиту.",
+    wrong_hint:"Парадоксально, але надлишок фтору руйнує зуби так само, як і його нестача, тільки через інший механізм — через утворення розчинного CaF₂."
+  },
+  {
+    id:26, topic:"Фтор та флюороз",
+    q:"Чому фториди заборонені в жувальних гумках?",
+    options:["Вони псують смак гумки","Ризик передозування фтору → флюороз зубів","Фтор руйнується при жуванні","Фтор несумісний з іншими компонентами гумки"],
+    correct:1,
+    explanation:"При жуванні гумки виділяється значна кількість слини та активно ковтається фтор. При постійному жуванні доза фтору може перевищити безпечний рівень (>3,5 мг/добу) → флюороз, гіперплазія тканин зуба.",
+    wrong_hint:"Проблема — в надлишковому надходженні фтору. Зубна паста виплюється, а з гумкою фтор частково ковтається постійно."
+  },
+  {
+    id:27, topic:"Фтор та флюороз",
+    q:"Чому препарати фтору ефективні при лікуванні карієсу?",
+    options:["Фтор вбиває всі бактерії ротової порожнини","Утворюється фторапатит, який в 10 разів гірше розчиняється в кислотах ніж гідроксиапатит","Фтор нейтралізує кислоти","Фтор посилює секрецію лізоциму"],
+    correct:1,
+    explanation:"Фторапатит Ca₁₀(PO₄)₆F₂ у 10 разів стійкіший до кислот ніж гідроксиапатит. Він підвищує міцність емалі, знижує проникність та підвищує резистентність до карієсогенних факторів. Фторидна профілактика карієсу — найдоказовіша стратегія.",
+    wrong_hint:"Фтор не нейтралізує кислоти і не є антибіотиком. Його дія — структурна: утворення більш стійкого апатиту."
+  },
+  // TOPIC 6: Ситуаційні задачі
+  {
+    id:28, topic:"Ситуаційні задачі",
+    q:"У пацієнта: зубний наліт, в'язка слина, підвищений лактат у слині. Яка патологія розвивається?",
+    options:["Флюороз","Множинний карієс — лактат (молочна кислота) знижує pH → демінералізація","Гіпоплазія зубів","Пародонтоз"],
+    correct:1,
+    explanation:"Підвищений вміст лактату → зниження pH → слина з мінералізуючого фактора перетворюється на демінералізуючий → множинний карієс. Причини поганого відділення слини: цукровий діабет, колагенози, залізодефіцитна анемія.",
+    wrong_hint:"Лактат = молочна кислота = продукт бродіння. Нагромадження кислот при в'язкій слині — це класичний сценарій карієсу."
+  },
+  {
+    id:29, topic:"Ситуаційні задачі",
+    q:"У дитини — гостра ниркова недостатність. Які показники слини підтвердять діагноз?",
+    options:["Зниження амілази","Підвищення сечовини, продуктів метаболізму стероїдних гормонів, зміна Ca/P та Na/K","Підвищення лізоциму","Підвищення муцину"],
+    correct:1,
+    explanation:"При нирковій недостатності слина стає 'додатковим фільтром'. В ній зростає вміст сечовини та продуктів метаболізму стероїдних гормонів (в нормі виводяться із сечею). Змінюється також співвідношення Ca/P і Na/K.",
+    wrong_hint:"Нирки виводять азотисті шлаки. При їх недостатності — шлаки накопичуються і виділяються через слинні залози."
+  },
+  {
+    id:30, topic:"Ситуаційні задачі",
+    q:"Дитина хвора на квашиоркор. Які порушення формування зубів?",
+    options:["Тільки порушення кольору емалі","Знижений біосинтез колагену, глікопротеїнів, протеогліканів → порушення органічного матриксу → гальмування мінералізації","Посилений ріст зубів","Флюороз"],
+    correct:1,
+    explanation:"Квашиоркор = важкий дефіцит тваринних білків → негативний азотистий баланс → знижений синтез ВСІХ білків, включаючи колаген і специфічні білки зуба → порушення органічного матриксу → гальмування мінералізації та утворення апатитів.",
+    wrong_hint:"Без білків неможливо збудувати органічний матрикс зуба. Мінерали не 'знають', де відкладатися — їм потрібен білковий каркас."
+  },
+  {
+    id:31, topic:"Ситуаційні задачі",
+    q:"Відчуття 'оскоми' після кислих фруктів проходить при щоденному чищенні зубів з фтором. Чому?",
+    options:["Фтор нейтралізує кислоти","Фтор утворює фторапатит — більш стійкий до кислот → зуби менш чутливі","Фтор зменшує нервову чутливість","Фтор збільшує товщину емалі"],
+    correct:1,
+    explanation:"Кислі фрукти → часткова демінералізація → підвищена чутливість. Зубна паста з фтором → фторапатит (більш стійкий) → зниження проникності емалі → зменшення чутливості. Це класичний приклад дії фтору.",
+    wrong_hint:"Фтор не нейтралізує кислоти. Він змінює структуру апатиту, роблячи його стійкішим."
+  },
+  {
+    id:32, topic:"Ситуаційні задачі",
+    q:"Для мінералізації пульпи підвищується кількість кисню. Яка роль катаболізму глюкози?",
+    options:["Глюкоза лише запасається","Аеробне окислення глюкози (ЦТК + дихальний ланцюг) → АТФ для мінералізації + цитрат для транспорту Ca²⁺","Глюкоза виводиться зі слиною","Тільки анаеробний гліколіз забезпечує енергію"],
+    correct:1,
+    explanation:"При мінералізації підвищується споживання кисню → аеробний метаболізм → ЦТК → синтез АТФ (для активних транспортних процесів) + цитрат (для транспорту Ca²⁺ в точки кристалізації) + CO₂.",
+    wrong_hint:"Анаеробний гліколіз менш ефективний. Саме аеробний катаболізм забезпечує достатню кількість АТФ і цитрату для мінералізації."
+  },
+  {
+    id:33, topic:"Ситуаційні задачі",
+    q:"Паратгормон стимулює всмоктування кальцію в кишківнику. Через який механізм?",
+    options:["Безпосередньо активує Ca²⁺-канали","Опосередковано — через стимуляцію синтезу кальцитріолу, який є справжнім активатором всмоктування","Блокує кальцитонін","Прямо впливає на ентероцити"],
+    correct:1,
+    explanation:"ПТГ → активує 1α-гідроксилазу нирок → 25(OH)D → 1,25(OH)₂D (кальцитріол). Кальцитріол діє як гормон → ядро ентероцита → синтез Ca²⁺-зв'язуючого білка (кальбіндин) → активне всмоктування Ca²⁺.",
+    wrong_hint:"ПТГ — непрямий регулятор. Безпосередньо всмоктування активує кальцитріол, а ПТГ лише 'вмикає' його синтез."
+  },
+  {
+    id:34, topic:"Ситуаційні задачі",
+    q:"Який мікроелемент має найбільш виражену карієсогенну дію?",
+    options:["Залізо","Селен — значно сповільнює мінералізацію тканин зуба","Йод","Цинк"],
+    correct:1,
+    explanation:"Серед мікроелементів, що не входять до структури апатитів, найбільш виражену карієсогенну дію має селен — він значно сповільнює процес мінералізації. Також карієсогенний ефект має надлишок фтору (флюороз) та стронцій.",
+    wrong_hint:"Залізо та йод не мають специфічного карієсогенного ефекту. Цинк навпаки — має протикарієсні властивості."
+  },
+  {
+    id:35, topic:"Ситуаційні задачі",
+    q:"Як усунути кетонемію при голодуванні після травми щелепи?",
+    options:["Призначити антибіотики","Внутрішньовенне введення розчину глюкози","Призначити вітаміни","Збільшити споживання ліпідів"],
+    correct:1,
+    explanation:"Кетонемія = посилений розпад білків, ліпідів на фоні нестачі вуглеводів → кетонові тіла. Після щелепної травми (неможливість жувати) → голодування → немає вуглеводів → кетоз. Лікування: в/в глюкоза → заповнення вуглеводного дефіциту.",
+    wrong_hint:"Антибіотики та вітаміни не вирішують проблему дефіциту вуглеводів. Потрібна пряма поставка глюкози в кров."
+  },
+  {
+    id:36, topic:"Ситуаційні задачі",
+    q:"При глікогенозах спостерігається порушення мінералізації зубів. Чому?",
+    options:["Через нестачу кальцію","Дефект генів метаболізму глікогену → порушення гліколізу → немає АТФ та цитрату для мінералізації","Через надлишок глюкози","Через запалення пульпи"],
+    correct:1,
+    explanation:"Глікогенози — генетичні дефекти обміну глікогену. Без нормального глікогенолізу та гліколізу неможливо отримати достатньо АТФ (для активних транспортних процесів мінералізації) та цитрату (транспорт Ca²⁺). Результат: порушення мінералізації.",
+    wrong_hint:"Мінералізація потребує енергії! Без АТФ — іони кальцію і фосфату не можуть активно транспортуватися до місць утворення апатитів."
+  },
+  {
+    id:37, topic:"Ситуаційні задачі",
+    q:"Яку роль відіграє муцин у слині?",
+    options:["Амілолітична дія","Антибактеріальний захист","В'язкість слини, захист від механічних подразнень, формування харчової грудки","Мінералізуюча функція"],
+    correct:2,
+    explanation:"Муцин — глікопротеїн (2–3 г/л, 50–60% білків слини), синтезується підщелепними залозами. Він надає слині в'язкість, захищає слизову від механічного пошкодження їжею та сприяє формуванню харчової грудки для ковтання.",
+    wrong_hint:"Антибактеріальну функцію виконує лізоцим, а мінералізуючу — іони Ca²⁺, PO₄³⁻ та ферменти. Муцин — механічний захист."
+  },
+  {
+    id:38, topic:"Ситуаційні задачі",
+    q:"Як змінюється метаболізм при недостатній гігієні порожнини рота?",
+    options:["Покращується мінералізація","Утворення зубної бляшки → бактерії → органічні кислоти та протеолітичні ферменти → руйнування емалі","Збільшується виділення лізоциму","Зростає pH слини"],
+    correct:1,
+    explanation:"Без гігієни: пелікула → матрикс бляшки → стрептококи виробляють: (1) органічні кислоти — пряма демінералізація; (2) гідролітичні ферменти (протеїнази, гіалуронідаза) — руйнування органічного матриксу. Мінералізація бляшки → зубний камінь.",
+    wrong_hint:"Бактерії у бляшці — це 'хімічний завод' з виробництва кислот. Без гігієни цей завод працює безперервно."
+  },
+  {
+    id:39, topic:"Ситуаційні задачі",
+    q:"Шаткість зубів у підлітка → аналіз рівня паратгормону. Чому саме ПТГ?",
+    options:["ПТГ регулює колір зубів","ПТГ регулює концентрацію Ca²⁺ та цитрату в крові — при його зниженні порушується мінералізація зубів","ПТГ впливає на синтез муцину","ПТГ активує лізоцим"],
+    correct:1,
+    explanation:"ПТГ регулює Ca²⁺ гомеостаз (через кальцитріол та пряму дію на кісткову тканину) та концентрацію цитрату — транспортної форми Ca²⁺. При гіпопаратиреозі → гіпокальціємія → порушення мінералізації → шаткість, крихкість зубів.",
+    wrong_hint:"ПТГ — ключовий гормон кальцієвого обміну. Без нормального ПТГ неможливо підтримати рівень Ca²⁺, необхідний для мінералізації."
+  },
+  {
+    id:40, topic:"Ситуаційні задачі",
+    q:"Цитрат у твердих тканинах зуба — який процес знижує його кількість?",
+    options:["Посилення синтезу колагену","Підвищення активності ізоцитратдегідрогенази в ЦТК → цитрат витрачається на α-кетоглутарат","Підвищення активності амілази","Посилення синтезу муцину"],
+    correct:1,
+    explanation:"Цитрат зв'язує Ca²⁺, утворюючи розчинні транспортні комплекси → сприяє мінералізації. При підвищенні активності ізоцитратдегідрогенази → цитрат → ізоцитрат → α-кетоглутарат (ЦТК) → зменшення транспортної форми Ca²⁺ → погіршення мінералізації.",
+    wrong_hint:"Цитрат — це і субстрат ЦТК, і транспортна форма Ca²⁺. При активному ЦТК його витрачається більше на енергетичний обмін."
+  }
+];
+
+// Name variations
+const NAME_VARIATIONS = {
+  'Даша': ['Дашуню', 'Пані Дар\'є', 'Дашко', 'Дашульо'],
+  'Катя': ['Катюшо', 'Пані Катерино', 'Катрусю'],
+  'Аня': ['Анюто', 'Пані Ганно', 'Анєчко'],
+  'Оля': ['Олюню', 'Пані Ольго', 'Олечко'],
+  'Маша': ['Машунько', 'Пані Маріє', 'Машко'],
+  'Саша': ['Сашко', 'Олександре', 'Сашуню'],
+  'Настя': ['Настуню', 'Пані Анастасіє', 'Настко'],
+  'Ліза': ['Лізонько', 'Єлизавето', 'Лізко'],
+  'Іра': ['Іронько', 'Пані Ірино', 'Ірусю'],
+  'Юля': ['Юліє', 'Юлюню', 'Пані Юліє'],
+  'Діма': ['Дімо', 'Дмитре', 'Димасю'],
+  'Дима': ['Дімо', 'Дмитре', 'Димасю'],
+  'Артем': ['Артемку', 'Артемчику', 'Темо'],
+  'Богдан': ['Богданчику', 'Богдане', 'Бодику'],
+  'Андрій': ['Андрійку', 'Андрію', 'Андрієчку'],
+  'Євген': ['Женю', 'Євгене', 'Женьку'],
+};
+
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+let userName = '';
+let userNameVar = '';
+let stats = { correct: 0, wrong: 0, answered: new Set() };
+let quizState = { questions: [], current: 0, correct: 0, wrong: 0, topic: 'all' };
+let activeTab = 'dashboard';
+let quizChipSelected = 'all';
+let studyChipSelected = 'all';
+
+// ═══════════════════════════════════════
+// NAME HANDLING
+// ═══════════════════════════════════════
+function getNickname(name) {
+  const base = name.trim();
+  for (const [key, variants] of Object.entries(NAME_VARIATIONS)) {
+    if (base.toLowerCase() === key.toLowerCase()) {
+      return variants[Math.floor(Math.random() * variants.length)];
+    }
+  }
+  // Default endings
+  const endings = ['', 'чку', 'нько', 'у'];
+  const picked = endings[Math.floor(Math.random() * endings.length)];
+  if (picked === '') return base;
+  if (base.endsWith('а') || base.endsWith('я')) return base.slice(0,-1) + picked;
+  return base + picked;
+}
+
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 5) return 'Добраніч';
+  if (h < 12) return 'Доброго ранку';
+  if (h < 17) return 'Доброго дня';
+  if (h < 21) return 'Доброго вечора';
+  return 'Добраніч';
+}
+
+// ═══════════════════════════════════════
+// STARTUP
+// ═══════════════════════════════════════
+function startApp() {
+  const input = document.getElementById('name-input').value.trim();
+  if (!input) { document.getElementById('name-input').focus(); return; }
+  userName = input;
+  userNameVar = getNickname(input);
+
+  document.getElementById('login-screen').classList.add('hide');
+  setTimeout(() => {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').classList.add('show');
+    initApp();
+  }, 600);
+}
+
+document.getElementById('name-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') startApp();
+});
+
+function initApp() {
+  const initial = userName.charAt(0).toUpperCase();
+  document.getElementById('user-avatar').textContent = initial;
+  document.getElementById('user-name-header').textContent = userName;
+  document.getElementById('greeting-text').textContent = `${getGreeting()}, ${userName}! 👋`;
+
+  buildTopicGrid();
+  buildChips('quiz-chips', startChipSelect);
+  buildChips('study-chips', studyChipSelect);
+  renderStudyList();
+  updateStats();
+}
+
+// ═══════════════════════════════════════
+// TOPICS
+// ═══════════════════════════════════════
+const TOPICS = [...new Set(QUESTIONS.map(q => q.topic))];
+
+function buildTopicGrid() {
+  const grid = document.getElementById('topic-grid');
+  const icons = { 'Мінералізація та апатити':'🦷','Вітаміни та зуби':'💊','Слина та її функції':'💧','Карієс та патологія':'⚠️','Фтор та флюороз':'🔬','Ситуаційні задачі':'📋' };
+  grid.innerHTML = TOPICS.map(t => {
+    const count = QUESTIONS.filter(q => q.topic === t).length;
+    const done = QUESTIONS.filter(q => q.topic === t && stats.answered.has(q.id)).length;
+    const pct = count ? Math.round(done/count*100) : 0;
+    return `
+    <div class="topic-card" onclick="startTopicQuiz('${t}')">
+      <div class="topic-card-content">
+        <span class="topic-icon">${icons[t]||'📌'}</span>
+        <div class="topic-name">${t}</div>
+        <div class="topic-count">${count} питань · пройдено ${done}</div>
+        <div class="topic-progress">
+          <div class="topic-progress-bar" style="width:${pct}%"></div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function buildChips(containerId, handler) {
+  const c = document.getElementById(containerId);
+  if (!c) return;
+  c.innerHTML = `<div class="chip active" onclick="${handler.name}('all',this)">Всі питання</div>` +
+    TOPICS.map(t => `<div class="chip" onclick="${handler.name}('${t}',this)">${t}</div>`).join('');
+}
+
+// ═══════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════
+function showTab(name) {
+  activeTab = name;
+  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', ['dashboard','quiz','study','chat'][i]===name));
+  ['dashboard','quiz','study','chat'].forEach(t => {
+    document.getElementById(`tab-${t}`).style.display = t===name ? 'block' : 'none';
+  });
+  if (name === 'dashboard') buildTopicGrid();
+}
+
+// ═══════════════════════════════════════
+// QUIZ
+// ═══════════════════════════════════════
+function startChipSelect(topic, el) {
+  quizChipSelected = topic;
+  document.querySelectorAll('#quiz-chips .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function startTopicQuiz(topic) {
+  showTab('quiz');
+  quizChipSelected = topic;
+  document.querySelectorAll('#quiz-chips .chip').forEach(c => {
+    c.classList.toggle('active', c.textContent === (topic==='all'?'Всі питання':topic));
+  });
+  startQuiz();
+}
+
+function startQuiz() {
+  const pool = quizChipSelected === 'all' ? [...QUESTIONS] : QUESTIONS.filter(q => q.topic === quizChipSelected);
+  quizState.questions = shuffle([...pool]);
+  quizState.current = 0;
+  quizState.correct = 0;
+  quizState.wrong = 0;
+  quizState.topic = quizChipSelected;
+
+  document.getElementById('quiz-start-screen').style.display = 'none';
+  document.getElementById('quiz-results-screen').style.display = 'none';
+  document.getElementById('quiz-game-screen').style.display = 'block';
+  document.getElementById('quiz-topic-name').textContent = quizChipSelected === 'all' ? 'Всі питання' : quizChipSelected;
+
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = quizState.questions[quizState.current];
+  const total = quizState.questions.length;
+  const pct = Math.round((quizState.current+1)/total*100);
+
+  document.getElementById('quiz-progress-text').textContent = `Питання ${quizState.current+1} з ${total}`;
+  document.getElementById('quiz-progress-bar').style.width = pct + '%';
+
+  const letters = ['А','Б','В','Г'];
+  document.getElementById('quiz-content').innerHTML = `
+    <div class="question-num">Питання ${quizState.current+1} / ${total}</div>
+    <div class="question-text">${q.q}</div>
+    <div class="options-list">
+      ${q.options.map((opt,i) => `
+        <button class="option-btn" onclick="selectAnswer(${i})" id="opt-${i}">
+          <span class="option-letter">${letters[i]}</span>
+          <span>${opt}</span>
+        </button>`).join('')}
+    </div>
+    <div class="feedback-card" id="feedback-card"></div>
+    <div class="ai-section" id="quiz-ai" style="display:none">
+      <div class="ai-header"><div class="ai-dot"></div> Запитати ШІ-асистента</div>
+      <div class="ai-messages" id="quiz-ai-msgs">
+        <div class="ai-msg bot">
+          <div class="msg-label">Асистент</div>
+          Хочеш щоб я детальніше пояснив цю тему? Запитуй!
+        </div>
+      </div>
+      <div class="ai-input-row">
+        <input class="ai-input" id="quiz-ai-input" placeholder="Чому саме ця відповідь правильна?..." onkeydown="if(event.key==='Enter')sendQuizAI()">
+        <button class="ai-send-btn" onclick="sendQuizAI()" id="quiz-ai-btn">➤</button>
+      </div>
+    </div>
+    <div style="margin-top:20px">
+      <button class="next-btn" id="next-btn" onclick="nextQuestion()">
+        ${quizState.current < quizState.questions.length-1 ? 'Наступне питання →' : 'Побачити результати →'}
+      </button>
+    </div>
+  `;
+}
+
+function selectAnswer(idx) {
+  const q = quizState.questions[quizState.current];
+  const isCorrect = idx === q.correct;
+  stats.answered.add(q.id);
+
+  document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+  document.getElementById(`opt-${idx}`).classList.add(isCorrect ? 'correct' : 'wrong');
+  document.getElementById(`opt-${q.correct}`).classList.add(isCorrect ? 'correct' : 'reveal');
+
+  if (isCorrect) {
+    quizState.correct++;
+    stats.correct++;
+    showFeedback(true, q);
+  } else {
+    quizState.wrong++;
+    stats.wrong++;
+    showFeedback(false, q);
+  }
+
+  document.getElementById('next-btn').classList.add('show');
+  document.getElementById('quiz-ai').style.display = 'block';
+  updateStats();
+
+  // Set context for AI
+  window._currentQ = q;
+}
+
+function showFeedback(correct, q) {
+  const nick = getNickname(userName);
+  const fb = document.getElementById('feedback-card');
+  fb.className = `feedback-card show ${correct ? 'correct-fb' : 'wrong-fb'}`;
+
+  if (correct) {
+    fb.innerHTML = `
+      <div class="fb-title correct-fb">✅ Чудово, ${nick}!</div>
+      <div class="fb-body">Правильна відповідь! Молодець — ти знаєш цей матеріал.</div>
+      <div class="fb-explanation"><strong>Пояснення:</strong> ${q.explanation}</div>`;
+  } else {
+    fb.innerHTML = `
+      <div class="fb-title wrong-fb">❌ На жаль, ${nick}, це неправильно</div>
+      <div class="fb-body">Давай розберемося, чому саме так:</div>
+      <div class="fb-explanation">
+        <strong>💡 Де помилка?</strong> ${q.wrong_hint}<br><br>
+        <strong>✅ Правильна відповідь:</strong> ${q.options[q.correct]}<br><br>
+        <strong>📚 Пояснення:</strong> ${q.explanation}
+      </div>`;
+  }
+}
+
+function nextQuestion() {
+  quizState.current++;
+  if (quizState.current >= quizState.questions.length) {
+    showResults();
+  } else {
+    renderQuestion();
+  }
+}
+
+function showResults() {
+  document.getElementById('quiz-game-screen').style.display = 'none';
+  const res = document.getElementById('quiz-results-screen');
+  res.style.display = 'block';
+
+  const total = quizState.correct + quizState.wrong;
+  const pct = total ? Math.round(quizState.correct/total*100) : 0;
+  const emoji = pct >= 80 ? '🏆' : pct >= 60 ? '👍' : pct >= 40 ? '💪' : '📚';
+  const msg = pct >= 80 ? `Блискуче, ${userName}! Ти готовий до іспиту!` :
+              pct >= 60 ? `Непогано, ${getNickname(userName)}! Ще трохи практики!` :
+              pct >= 40 ? `Продовжуй, ${getNickname(userName)}! Повтори матеріал.` :
+              `Не сумуй, ${getNickname(userName)}! Спочатку почитай теорію.`;
+
+  res.innerHTML = `
+    <div class="results-box">
+      <div class="results-emoji">${emoji}</div>
+      <div class="results-title">${msg}</div>
+      <div class="results-score" style="color:${pct>=60?'var(--green)':'var(--red)'}">${pct}%</div>
+      <div class="results-sub">Правильно: ${quizState.correct} · Помилок: ${quizState.wrong} · Всього: ${total}</div>
+      <div class="results-actions">
+        <button class="res-btn primary" onclick="startQuiz()">Ще раз</button>
+        <button class="res-btn secondary" onclick="backToQuizStart()">Змінити тему</button>
+        <button class="res-btn secondary" onclick="showTab('study')">Вивчити матеріал</button>
+      </div>
+    </div>`;
+}
+
+function endQuiz() {
+  backToQuizStart();
+}
+
+function backToQuizStart() {
+  document.getElementById('quiz-start-screen').style.display = 'block';
+  document.getElementById('quiz-game-screen').style.display = 'none';
+  document.getElementById('quiz-results-screen').style.display = 'none';
+}
+
+// ═══════════════════════════════════════
+// STUDY MODE
+// ═══════════════════════════════════════
+function studyChipSelect(topic, el) {
+  studyChipSelected = topic;
+  document.querySelectorAll('#study-chips .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderStudyList();
+}
+
+function renderStudyList() {
+  const list = document.getElementById('study-list');
+  if (!list) return;
+  const pool = studyChipSelected === 'all' ? QUESTIONS : QUESTIONS.filter(q => q.topic === studyChipSelected);
+
+  list.innerHTML = pool.map(q => `
+    <div class="study-card" id="sc-${q.id}">
+      <div class="study-q">${q.id}. ${q.q}</div>
+      <button class="study-a-btn" onclick="toggleStudyAnswer(${q.id})">👁 Показати відповідь</button>
+      <div class="study-a" id="sa-${q.id}">
+        <strong style="color:var(--cyan)">✅ Правильно:</strong> ${q.options[q.correct]}<br><br>
+        <strong style="color:var(--text2)">📖 Пояснення:</strong> ${q.explanation}
+      </div>
+    </div>`).join('');
+}
+
+function toggleStudyAnswer(id) {
+  const el = document.getElementById(`sa-${id}`);
+  const btn = el.previousElementSibling;
+  el.classList.toggle('show');
+  btn.textContent = el.classList.contains('show') ? '🙈 Сховати відповідь' : '👁 Показати відповідь';
+}
+
+// ═══════════════════════════════════════
+// AI ASSISTANT
+// ═══════════════════════════════════════
+async function callAI(messages) {
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: `Ти — дружній та розумний асистент з біохімії для студентів стоматологічного факультету 2 курсу НМУ (Україна). 
+Студента звати ${userName}. Відповідай українською мовою. 
+Пояснюй зрозуміло, використовуй приклади, хімічні формули де потрібно. 
+Якщо студент помилився — підтримуй його морально і поясни помилку чітко та доброзичливо.
+Теми: мінералізація зубів, апатити, вітаміни, слина, карієс, флюороз, пародонт.`,
+        messages
+      })
+    });
+    const data = await res.json();
+    return data.content?.[0]?.text || 'Вибач, не вдалося отримати відповідь.';
+  } catch(e) {
+    return 'Вибач, не вдалося підключитися до ШІ. Перевір підключення до мережі.';
+  }
+}
+
+async function sendMainChat() {
+  const input = document.getElementById('main-chat-input');
+  const btn = document.getElementById('main-chat-btn');
+  const text = input.value.trim();
+  if (!text) return;
+
+  appendMsg('main-chat-messages', 'user', text);
+  input.value = '';
+  btn.disabled = true;
+
+  const typing = appendTyping('main-chat-messages');
+  const reply = await callAI([{ role:'user', content:text }]);
+  typing.remove();
+  appendMsg('main-chat-messages', 'bot', reply);
+  btn.disabled = false;
+}
+
+async function sendQuizAI() {
+  const input = document.getElementById('quiz-ai-input');
+  const btn = document.getElementById('quiz-ai-btn');
+  const text = input.value.trim();
+  if (!text) return;
+
+  const q = window._currentQ;
+  const context = q ? `Питання: "${q.q}". Правильна відповідь: "${q.options[q.correct]}". Пояснення: ${q.explanation}` : '';
+
+  appendMsg('quiz-ai-msgs', 'user', text);
+  input.value = '';
+  btn.disabled = true;
+
+  const typing = appendTyping('quiz-ai-msgs');
+  const messages = context
+    ? [{ role:'user', content:`Контекст: ${context}\n\nПитання студента: ${text}` }]
+    : [{ role:'user', content:text }];
+  const reply = await callAI(messages);
+  typing.remove();
+  appendMsg('quiz-ai-msgs', 'bot', reply);
+  btn.disabled = false;
+}
+
+function appendMsg(containerId, role, text) {
+  const c = document.getElementById(containerId);
+  const div = document.createElement('div');
+  div.className = `ai-msg ${role}`;
+  div.innerHTML = `<div class="msg-label">${role==='bot'?'Асистент':userName}</div>${text}`;
+  c.appendChild(div);
+  c.scrollTop = c.scrollHeight;
+  return div;
+}
+
+function appendTyping(containerId) {
+  const c = document.getElementById(containerId);
+  const div = document.createElement('div');
+  div.className = 'ai-msg bot';
+  div.innerHTML = `<div class="msg-label">Асистент</div><div class="ai-typing"><span></span><span></span><span></span></div>`;
+  c.appendChild(div);
+  c.scrollTop = c.scrollHeight;
+  return div;
+}
+
+// ═══════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════
+function updateStats() {
+  const total = stats.correct + stats.wrong;
+  const pct = total ? Math.round(stats.correct/total*100) : 0;
+  document.getElementById('h-correct').textContent = stats.correct;
+  document.getElementById('h-wrong').textContent = stats.wrong;
+  document.getElementById('h-pct').textContent = total ? pct+'%' : '—%';
+  document.getElementById('stat-correct').textContent = stats.correct;
+  document.getElementById('stat-wrong').textContent = stats.wrong;
+  document.getElementById('stat-pct').textContent = total ? pct+'%' : '—%';
+}
+
+function shuffle(arr) {
+  for (let i = arr.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]] = [arr[j],arr[i]];
+  }
+  return arr;
+}
+</script>
+</body>
+</html>
